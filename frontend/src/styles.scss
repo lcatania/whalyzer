@@ -1,0 +1,57 @@
+/* You can add global styles to this file, and also import other style files */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+    overflow: hidden;
+}
+
+span {
+    font-family: 'VT323';
+}
+
+.base-button {
+    @apply border-r-[4px];
+    @apply border-b-[6px];
+    @apply border-solid;
+    @apply px-2;
+    @apply outline-none;
+    @apply active:translate-y-[2px];
+    @apply text-2xl;
+    @apply pixel-border;
+    font-family: 'VT323';
+
+    &.primary {
+        @apply bg-sky-200;
+        @apply border-sky-500;
+
+        &.selected {
+            @apply bg-orange-200;
+            @apply border-orange-500;
+        }
+    }
+
+    &.selected {
+        @apply translate-y-[2px];
+    }
+}
+
+.base-input {
+
+    @apply h-12;
+    @apply outline-none;
+    @apply px-3;
+    @apply text-3xl;
+
+    font-family: 'VT323';
+
+}
+
+.pixel-border {
+    box-shadow: -3px 0 0 0 black,
+        3px 0 0 0 black,
+        0 -3px 0 0 black,
+        0 3px 0 0 black;
+}
