@@ -4,7 +4,7 @@ import { DragScrollModule } from 'ngx-drag-scroll';
 import { Tile } from './models/Tile';
 import { Container } from './models/Container';
 import { ContainerStateToColorPipe } from './pipes/state-to-color.pipe';
-import { Network } from './models/Network';
+import { Network, NetworkConnection } from './models/Network';
 
 const CONTAINER_IMAGE = '../assets/container.png'
 
@@ -24,6 +24,11 @@ export class AppComponent {
   midTileLayer: Array<Array<Container | undefined>> = [];
   currentContainerCoords: { [key: string]: { ROW: number, COL: number } } = {};
   selectedContainer!: Container
+  networks: Network[] = [];
+  connections: NetworkConnection[] = [];
+  hoveredContainer!: { name: string, top: number, left: number } | undefined;
+  hoveredConnection!: { name: string, top: number, left: number } | undefined;
+
 
   @ViewChild('map', { static: false }) map!: ElementRef<HTMLDivElement>;
 
@@ -73,7 +78,20 @@ export class AppComponent {
       this.midTileLayer[containerCoords.ROW][containerCoords.COL] = undefined
       delete this.currentContainerCoords[data.detail]
     })
-    await Neutralino.events.on("NETWORK_LIST", (data: CustomEvent<Network[]>) => {
+    await Neutralino.events.on("NETWORK_LIST", (data: CustomEvent<{ name: string, containers: string[] }[]>) => {
+      data.detail.forEach((n) => {
+        const index = this.networks.findIndex((n) => n.name === n.name);
+        if (index !== -1) {
+          this.networks[index].containers = n.containers.map((key) => this.currentContainerCoords[key])
+        }
+        else {
+          this.networks.push({
+            name: n.name,
+            containers: n.containers.map((key) => this.currentContainerCoords[key])
+          })
+          this.createNetworkConnection(n.name, n.containers);
+        }
+      })
     })
 
   }
@@ -111,7 +129,7 @@ export class AppComponent {
           firstVisibleRowIndex = index;
         }
       }
-      // If the child is outside the viewport 
+      // If the child is outside the viewport
       else {
         if (!firstVisibleRow)
           continue;
@@ -176,23 +194,80 @@ export class AppComponent {
     return result;
   }
 
+  createNetworkConnection(networkName: string, containers: string[]) {
+
+    for (let index = 0; index < containers.length; index++) {
+      const firstElement = containers[index];
+      const firstDOM = this.getDOMElementFromCoords(this.currentContainerCoords[firstElement]);
+      if (!firstDOM)
+        continue;
+      const firstBounds = firstDOM?.getBoundingClientRect();
+      for (let secondIndex = 0; secondIndex < containers.length; secondIndex++) {
+
+        if (index === secondIndex)
+          continue;
+        const secondElement = containers[secondIndex];
+        const secondDOM = this.getDOMElementFromCoords(this.currentContainerCoords[secondElement]);
+        if (!secondDOM)
+          continue
+        const secondBounds = secondDOM.getBoundingClientRect();
+        this.connections.push({
+          name: networkName,
+          x1: firstBounds.x + 32,
+          x2: secondBounds.x + 32,
+          y1: firstBounds.y + 16,
+          y2: secondBounds.y + 16,
+          isHovered: false
+        })
+      }
+    }
+  }
+
+  getDOMElementFromCoords(coords: { COL: number, ROW: number }): HTMLElement | null {
+    return document.getElementById(coords.ROW.toString() + coords.COL.toString());
+  }
+
   entitySelected(event: MouseEvent, rowIndex: number, colIndex: number) {
     const entity = this.midTileLayer[rowIndex][colIndex];
-    if (this.isContainer(entity)) {
-      this.isCreateContainerModalVisible = true
-      this.selectedContainer = entity;
-    }
+    if (!entity)
+      return;
+    this.isCreateContainerModalVisible = true
+    this.selectedContainer = entity;
     event.stopPropagation();
   }
 
-  isContainer(entity: Container | undefined): entity is Container {
-    if (!entity || !("image" in entity))
-      return false;
-    return true;
+  baseSelected() {
+    console.log("BASE");
   }
 
-  async baseSelected() {
-    console.log("BASE");
+  mouseLeaveConnection(connection: NetworkConnection) {
+    connection.isHovered = false;
+    this.hoveredConnection = undefined;
+  }
+
+  mouseEnterConnection(connection: NetworkConnection, element: unknown) {
+    connection.isHovered = true;
+    this.hoveredConnection = {
+      name: connection.name,
+      left: (element as SVGLineElement).getBoundingClientRect().left + ((element as SVGLineElement).getTotalLength() / 2),
+      top: (element as SVGLineElement).getBoundingClientRect().bottom  - ((element as SVGLineElement).getTotalLength() / 2)
+    };
+  }
+
+  mouseLeaveContainer(container: Container | undefined) {
+    if (!container)
+      return;
+    this.hoveredConnection = undefined;
+  }
+
+  mouseEnterContainer(container: Container | undefined, element: HTMLDivElement) {
+    if (!container)
+      return;
+    this.hoveredContainer = {
+      name: container.name,
+      left: element.getBoundingClientRect().left,
+      top: element.getBoundingClientRect().top
+    };
   }
 
 }
