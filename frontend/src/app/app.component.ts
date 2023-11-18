@@ -1,19 +1,21 @@
-import { Component, ElementRef, ViewChild } from '@angular/core';
+import { Component, ElementRef, HostListener, ViewChild } from '@angular/core';
 import { NgFor, NgIf } from '@angular/common';
 import { DragScrollModule } from 'ngx-drag-scroll';
 import { Tile } from './models/Tile';
 import { Container } from './models/Container';
 import { ContainerStateToColorPipe } from './pipes/state-to-color.pipe';
 import { Network, NetworkConnection } from './models/Network';
+import { ContainerDialogComponent } from "./partials/container-dialog/container-dialog.component";
+import { CommandPaletteComponent } from "./partials/command-palette/command-palette.component";
 
 const CONTAINER_IMAGE = '../assets/container.png'
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [NgIf, NgFor, DragScrollModule, ContainerStateToColorPipe],
   templateUrl: './app.component.html',
-  styleUrls: ['./app.component.scss']
+  styleUrls: ['./app.component.scss'],
+  imports: [NgIf, NgFor, DragScrollModule, ContainerStateToColorPipe, ContainerDialogComponent, CommandPaletteComponent]
 })
 export class AppComponent {
 
@@ -30,7 +32,18 @@ export class AppComponent {
 
   @ViewChild('map', { static: false }) map!: ElementRef<HTMLDivElement>;
 
-  isCreateContainerModalVisible: boolean = false;
+  @HostListener('window:keydown', ['$event'])
+  onKeyDown(event:KeyboardEvent) {
+    if(event.key === 'Escape') {
+      this.isCommandPaletteVisible = false;
+    }
+    if(event.key === 'p' && event.ctrlKey){
+      this.isCommandPaletteVisible = true;
+    }
+  }
+
+  isContainerDialogVisible: boolean = false;
+  isCommandPaletteVisible: boolean = false;
 
   async ngOnInit() {
     for (let xIndex = 0; xIndex <= this.ROWS; xIndex++) {
@@ -144,10 +157,6 @@ export class AppComponent {
       icon: CONTAINER_IMAGE,
     } as Container;
     this.midTileLayer[row][col] = entity;
-  }
-
-  dismissModal() {
-    this.isCreateContainerModalVisible = false;
   }
 
   getVisibleTiles(): { firstVisibleRowIndex: number, lastVisibleRowIndex: number, firstVisibleColIndex: number, lastVisibleColIndex: number } | undefined {
@@ -268,7 +277,7 @@ export class AppComponent {
     const entity = this.midTileLayer[rowIndex][colIndex];
     if (!entity)
       return;
-    this.isCreateContainerModalVisible = true
+    this.isContainerDialogVisible = true
     this.selectedContainer = entity;
     event.stopPropagation();
   }

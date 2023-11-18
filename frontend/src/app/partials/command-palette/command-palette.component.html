@@ -1,0 +1,29 @@
+<button (click)="isVisible = !isVisible"
+    class="absolute top-5 right-5 rounded-md bg-black w-[42px] h-[42px] flex flex-col text-white justify-center items-center text-3xl font-bold leading-[10px]">
+    <span>></span>
+    <span>_</span>
+</button>
+@if(isVisible){
+<div class="absolute z-30 bottom-5 rounded-md left-0 w-full h-48 bg-black flex flex-col justify-end  p-3">
+    <span></span>
+    <ol class="text-white px-3">
+        <li class="text-2xl">
+            <span>start "name" => Start a container</span>
+        </li>
+        <li class="text-2xl">
+            <span>stop "name" => Stop a running container</span>
+        </li>
+        <li class="text-2xl">
+            <span>pause "name" => Pause a running container</span>
+        </li>
+        <li class="text-2xl">
+            <span>remove "name" => Destroy a stopped container</span>
+        </li>
+    </ol>
+
+    <div class="flex">
+        <span class="text-2xl text-white">></span>
+        <input #commandInput autofocus="true" class="w-full bg-black text-white text-2xl outline-none px-5" />
+    </div>
+</div>
+}

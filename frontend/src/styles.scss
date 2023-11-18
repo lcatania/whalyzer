@@ -12,6 +12,10 @@ span {
     font-family: 'VT323';
 }
 
+input {
+    font-family: "VT323";
+}
+
 .base-button {
     @apply border-r-[4px];
     @apply border-b-[6px];
@@ -27,14 +31,6 @@ span {
         @apply bg-sky-200;
         @apply border-sky-500;
 
-        &.selected {
-            @apply bg-orange-200;
-            @apply border-orange-500;
-        }
-    }
-
-    &.selected {
-        @apply translate-y-[2px];
     }
 }
 
