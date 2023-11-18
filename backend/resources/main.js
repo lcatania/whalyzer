@@ -288,6 +288,7 @@ class AppComponent {
       yield Neutralino.events.on("REMOVE_CONTAINER", data => {
         const containerCoords = _this.currentContainerCoords[data.detail];
         if (!containerCoords) return;
+        _this.connections = _this.connections.filter(c => c.from !== data.detail && c.to !== data.detail);
         _this.midTileLayer[containerCoords.ROW][containerCoords.COL] = undefined;
         delete _this.currentContainerCoords[data.detail];
       });
@@ -295,14 +296,25 @@ class AppComponent {
         data.detail.forEach(n => {
           const index = _this.networks.findIndex(n => n.name === n.name);
           if (index !== -1) {
-            //TODO: update networks
             const newContainerInNetwork = n.containers.filter(c => !Object.keys(_this.networks[index].containers).includes(c));
+            let containerPairs = [];
             if (newContainerInNetwork.length === 0) return;
+            for (let index = 0; index < n.containers.length; index++) {
+              const firstElement = n.containers[index];
+              for (let secondIndex = 0; secondIndex < newContainerInNetwork.length; secondIndex++) {
+                const secondElement = newContainerInNetwork[secondIndex];
+                if (firstElement === secondElement) continue;
+                containerPairs.push({
+                  firstContainer: firstElement,
+                  secondContainer: secondElement
+                });
+              }
+            }
             _this.networks[index].containers = n.containers.reduce((map, id) => {
               map[id] = _this.currentContainerCoords[id];
               return map;
             }, {});
-            _this.createNetworkConnection(n.name, n.containers);
+            _this.createNetworkConnection(n.name, containerPairs);
           } else {
             _this.networks.push({
               name: n.name,
@@ -311,7 +323,20 @@ class AppComponent {
                 return map;
               }, {})
             });
-            _this.createNetworkConnection(n.name, n.containers);
+            const containerPairs = [];
+            for (let index = 0; index < n.containers.length; index++) {
+              const firstElement = n.containers[index];
+              for (let secondIndex = 0; secondIndex < n.containers.length; secondIndex++) {
+                const secondElement = n.containers[secondIndex];
+                if (index === secondIndex) continue;
+                if (containerPairs.findIndex(cp => cp.firstContainer === secondElement && cp.secondContainer === firstElement) > -1) continue;
+                containerPairs.push({
+                  firstContainer: firstElement,
+                  secondContainer: secondElement
+                });
+              }
+            }
+            _this.createNetworkConnection(n.name, containerPairs);
           }
         });
       });
@@ -400,30 +425,25 @@ class AppComponent {
     });
     return result;
   }
-  createNetworkConnection(networkName, containers) {
-    let connectedContainer = [];
-    for (let index = 0; index < containers.length; index++) {
-      const firstElement = containers[index];
-      const firstDOM = this.getDOMElementFromCoords(this.currentContainerCoords[firstElement]);
+  createNetworkConnection(networkName, containerPairs) {
+    for (let index = 0; index < containerPairs.length; index++) {
+      const newConn = containerPairs[index];
+      const firstDOM = this.getDOMElementFromCoords(this.currentContainerCoords[newConn.firstContainer]);
       if (!firstDOM) continue;
-      const firstBounds = firstDOM?.getBoundingClientRect();
-      for (let secondIndex = 0; secondIndex < containers.length; secondIndex++) {
-        const secondElement = containers[secondIndex];
-        if (index === secondIndex) continue;
-        if (connectedContainer.some(i => i === `${firstElement};${secondElement}` || i === `${secondElement};${firstElement}`)) continue;
-        const secondDOM = this.getDOMElementFromCoords(this.currentContainerCoords[secondElement]);
-        if (!secondDOM) continue;
-        const secondBounds = secondDOM.getBoundingClientRect();
-        this.connections.push({
-          name: networkName,
-          x1: firstBounds.x + 32,
-          x2: secondBounds.x + 32,
-          y1: firstBounds.y + 16,
-          y2: secondBounds.y + 16,
-          isHovered: false
-        });
-        connectedContainer.push(`${firstElement};${secondElement}`);
-      }
+      const secondDOM = this.getDOMElementFromCoords(this.currentContainerCoords[newConn.secondContainer]);
+      if (!secondDOM) continue;
+      const firstBounds = firstDOM.getBoundingClientRect();
+      const secondBounds = secondDOM.getBoundingClientRect();
+      this.connections.push({
+        name: networkName,
+        from: newConn.firstContainer,
+        to: newConn.secondContainer,
+        x1: firstBounds.x + 32,
+        x2: secondBounds.x + 32,
+        y1: firstBounds.y + 16,
+        y2: secondBounds.y + 16,
+        isHovered: false
+      });
     }
   }
   getDOMElementFromCoords(coords) {

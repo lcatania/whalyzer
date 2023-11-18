@@ -74,6 +74,7 @@ export class AppComponent {
       const containerCoords = this.currentContainerCoords[data.detail];
       if (!containerCoords)
         return;
+      this.connections = this.connections.filter(c => c.from !== data.detail && c.to !== data.detail)
       this.midTileLayer[containerCoords.ROW][containerCoords.COL] = undefined
       delete this.currentContainerCoords[data.detail]
     })
@@ -82,17 +83,29 @@ export class AppComponent {
       data.detail.forEach((n) => {
         const index = this.networks.findIndex((n) => n.name === n.name);
         if (index !== -1) {
-          //TODO: update networks
           const newContainerInNetwork = n.containers.filter((c) => !Object.keys(this.networks[index].containers).includes(c))
+          let containerPairs: { firstContainer: string, secondContainer: string }[] = [];
+
           if (newContainerInNetwork.length === 0)
             return;
 
+          for (let index = 0; index < n.containers.length; index++) {
+            const firstElement = n.containers[index];
+            for (let secondIndex = 0; secondIndex < newContainerInNetwork.length; secondIndex++) {
+              const secondElement = newContainerInNetwork[secondIndex];
+              if (firstElement === secondElement)
+                continue;
+              containerPairs.push({
+                firstContainer: firstElement,
+                secondContainer: secondElement
+              })
+            }
+          }
           this.networks[index].containers = n.containers.reduce((map: { [key: string]: { COL: number, ROW: number } }, id: string) => {
             map[id] = this.currentContainerCoords[id];
             return map;
           }, {});
-
-          this.createNetworkConnection(n.name, n.containers);
+          this.createNetworkConnection(n.name, containerPairs);
         }
         else {
           this.networks.push({
@@ -102,7 +115,24 @@ export class AppComponent {
               return map;
             }, {})
           })
-          this.createNetworkConnection(n.name, n.containers);
+          const containerPairs: { firstContainer: string, secondContainer: string }[] = [];
+          for (let index = 0; index < n.containers.length; index++) {
+            const firstElement = n.containers[index];
+            for (let secondIndex = 0; secondIndex < n.containers.length; secondIndex++) {
+              const secondElement = n.containers[secondIndex];
+              if (index === secondIndex)
+                continue;
+
+              if (containerPairs.findIndex(cp => cp.firstContainer === secondElement && cp.secondContainer === firstElement) > -1)
+                continue;
+
+              containerPairs.push({
+                firstContainer: firstElement,
+                secondContainer: secondElement
+              })
+            }
+          }
+          this.createNetworkConnection(n.name, containerPairs);
         }
       })
     })
@@ -206,35 +236,28 @@ export class AppComponent {
     return result;
   }
 
-  createNetworkConnection(networkName: string, containers: string[]) {
-    let connectedContainer: string[] = [];
-
-    for (let index = 0; index < containers.length; index++) {
-      const firstElement = containers[index];
-      const firstDOM = this.getDOMElementFromCoords(this.currentContainerCoords[firstElement]);
+  createNetworkConnection(networkName: string, containerPairs: { firstContainer: string, secondContainer: string }[]) {
+    for (let index = 0; index < containerPairs.length; index++) {
+      const newConn = containerPairs[index];
+      const firstDOM = this.getDOMElementFromCoords(this.currentContainerCoords[newConn.firstContainer]);
       if (!firstDOM)
         continue;
-      const firstBounds = firstDOM?.getBoundingClientRect();
-      for (let secondIndex = 0; secondIndex < containers.length; secondIndex++) {
-        const secondElement = containers[secondIndex];
-        if (index === secondIndex)
-          continue;
-        if (connectedContainer.some((i) => i === `${firstElement};${secondElement}` || i === `${secondElement};${firstElement}`))
-          continue;
-        const secondDOM = this.getDOMElementFromCoords(this.currentContainerCoords[secondElement]);
-        if (!secondDOM)
-          continue
-        const secondBounds = secondDOM.getBoundingClientRect();
-        this.connections.push({
-          name: networkName,
-          x1: firstBounds.x + 32,
-          x2: secondBounds.x + 32,
-          y1: firstBounds.y + 16,
-          y2: secondBounds.y + 16,
-          isHovered: false
-        })
-        connectedContainer.push(`${firstElement};${secondElement}`)
-      }
+      const secondDOM = this.getDOMElementFromCoords(this.currentContainerCoords[newConn.secondContainer]);
+      if (!secondDOM)
+        continue;
+      const firstBounds = firstDOM.getBoundingClientRect();
+      const secondBounds = secondDOM.getBoundingClientRect();
+      this.connections.push({
+        name: networkName,
+        from : newConn.firstContainer,
+        to: newConn.secondContainer,
+        x1: firstBounds.x + 32,
+        x2: secondBounds.x + 32,
+        y1: firstBounds.y + 16,
+        y2: secondBounds.y + 16,
+        isHovered: false
+      })
+
     }
   }
 
