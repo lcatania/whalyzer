@@ -295,11 +295,21 @@ class AppComponent {
         data.detail.forEach(n => {
           const index = _this.networks.findIndex(n => n.name === n.name);
           if (index !== -1) {
-            _this.networks[index].containers = n.containers.map(key => _this.currentContainerCoords[key]);
+            //TODO: update networks
+            const newContainerInNetwork = n.containers.filter(c => !Object.keys(_this.networks[index].containers).includes(c));
+            if (newContainerInNetwork.length === 0) return;
+            _this.networks[index].containers = n.containers.reduce((map, id) => {
+              map[id] = _this.currentContainerCoords[id];
+              return map;
+            }, {});
+            _this.createNetworkConnection(n.name, n.containers);
           } else {
             _this.networks.push({
               name: n.name,
-              containers: n.containers.map(key => _this.currentContainerCoords[key])
+              containers: n.containers.reduce((map, id) => {
+                map[id] = _this.currentContainerCoords[id];
+                return map;
+              }, {})
             });
             _this.createNetworkConnection(n.name, n.containers);
           }
@@ -391,14 +401,16 @@ class AppComponent {
     return result;
   }
   createNetworkConnection(networkName, containers) {
+    let connectedContainer = [];
     for (let index = 0; index < containers.length; index++) {
       const firstElement = containers[index];
       const firstDOM = this.getDOMElementFromCoords(this.currentContainerCoords[firstElement]);
       if (!firstDOM) continue;
       const firstBounds = firstDOM?.getBoundingClientRect();
       for (let secondIndex = 0; secondIndex < containers.length; secondIndex++) {
-        if (index === secondIndex) continue;
         const secondElement = containers[secondIndex];
+        if (index === secondIndex) continue;
+        if (connectedContainer.some(i => i === `${firstElement};${secondElement}` || i === `${secondElement};${firstElement}`)) continue;
         const secondDOM = this.getDOMElementFromCoords(this.currentContainerCoords[secondElement]);
         if (!secondDOM) continue;
         const secondBounds = secondDOM.getBoundingClientRect();
@@ -410,6 +422,7 @@ class AppComponent {
           y2: secondBounds.y + 16,
           isHovered: false
         });
+        connectedContainer.push(`${firstElement};${secondElement}`);
       }
     }
   }
@@ -427,19 +440,26 @@ class AppComponent {
     console.log("BASE");
   }
   mouseLeaveConnection(connection) {
-    connection.isHovered = false;
+    this.connections.forEach(c => {
+      c.isHovered = false;
+    });
+    this.hoveredContainer = undefined;
     this.hoveredConnection = undefined;
   }
   mouseEnterConnection(connection, element) {
-    connection.isHovered = true;
+    this.connections.forEach(c => {
+      if (c.name === connection.name) c.isHovered = true;
+    });
+    const elementBounds = element.getBoundingClientRect();
     this.hoveredConnection = {
       name: connection.name,
-      left: element.getBoundingClientRect().left + element.getTotalLength() / 2,
-      top: element.getBoundingClientRect().bottom - element.getTotalLength() / 2
+      left: elementBounds.left - 20 + elementBounds.width / 2,
+      top: elementBounds.top + elementBounds.height / 2
     };
   }
   mouseLeaveContainer(container) {
     if (!container) return;
+    this.hoveredConnection = undefined;
     this.hoveredConnection = undefined;
   }
   mouseEnterContainer(container, element) {

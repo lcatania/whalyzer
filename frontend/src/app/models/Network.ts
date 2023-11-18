@@ -1,6 +1,6 @@
 export type Network = {
   name: string;
-  containers: { ROW: number; COL: number }[];
+  containers: { [key: string]: { ROW: number; COL: number } };
 }
 
 export type NetworkConnection = {
@@ -8,6 +8,6 @@ export type NetworkConnection = {
   x2: number;
   y1: number;
   y2: number;
-  name:string;
+  name: string;
   isHovered: boolean;
 }

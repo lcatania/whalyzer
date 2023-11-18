@@ -29,7 +29,6 @@ export class AppComponent {
   hoveredContainer!: { name: string, top: number, left: number } | undefined;
   hoveredConnection!: { name: string, top: number, left: number } | undefined;
 
-
   @ViewChild('map', { static: false }) map!: ElementRef<HTMLDivElement>;
 
   isCreateContainerModalVisible: boolean = false;
@@ -78,22 +77,35 @@ export class AppComponent {
       this.midTileLayer[containerCoords.ROW][containerCoords.COL] = undefined
       delete this.currentContainerCoords[data.detail]
     })
+
     await Neutralino.events.on("NETWORK_LIST", (data: CustomEvent<{ name: string, containers: string[] }[]>) => {
       data.detail.forEach((n) => {
         const index = this.networks.findIndex((n) => n.name === n.name);
         if (index !== -1) {
-          this.networks[index].containers = n.containers.map((key) => this.currentContainerCoords[key])
+          //TODO: update networks
+          const newContainerInNetwork = n.containers.filter((c) => !Object.keys(this.networks[index].containers).includes(c))
+          if (newContainerInNetwork.length === 0)
+            return;
+
+          this.networks[index].containers = n.containers.reduce((map: { [key: string]: { COL: number, ROW: number } }, id: string) => {
+            map[id] = this.currentContainerCoords[id];
+            return map;
+          }, {});
+
+          this.createNetworkConnection(n.name, n.containers);
         }
         else {
           this.networks.push({
             name: n.name,
-            containers: n.containers.map((key) => this.currentContainerCoords[key])
+            containers: n.containers.reduce((map: { [key: string]: { COL: number, ROW: number } }, id: string) => {
+              map[id] = this.currentContainerCoords[id];
+              return map;
+            }, {})
           })
           this.createNetworkConnection(n.name, n.containers);
         }
       })
     })
-
   }
 
   addContainer(row: number, col: number, container: Container) {
@@ -195,6 +207,7 @@ export class AppComponent {
   }
 
   createNetworkConnection(networkName: string, containers: string[]) {
+    let connectedContainer: string[] = [];
 
     for (let index = 0; index < containers.length; index++) {
       const firstElement = containers[index];
@@ -203,10 +216,11 @@ export class AppComponent {
         continue;
       const firstBounds = firstDOM?.getBoundingClientRect();
       for (let secondIndex = 0; secondIndex < containers.length; secondIndex++) {
-
+        const secondElement = containers[secondIndex];
         if (index === secondIndex)
           continue;
-        const secondElement = containers[secondIndex];
+        if (connectedContainer.some((i) => i === `${firstElement};${secondElement}` || i === `${secondElement};${firstElement}`))
+          continue;
         const secondDOM = this.getDOMElementFromCoords(this.currentContainerCoords[secondElement]);
         if (!secondDOM)
           continue
@@ -219,6 +233,7 @@ export class AppComponent {
           y2: secondBounds.y + 16,
           isHovered: false
         })
+        connectedContainer.push(`${firstElement};${secondElement}`)
       }
     }
   }
@@ -241,22 +256,30 @@ export class AppComponent {
   }
 
   mouseLeaveConnection(connection: NetworkConnection) {
-    connection.isHovered = false;
+    this.connections.forEach((c) => {
+      c.isHovered = false;
+    })
+    this.hoveredContainer = undefined;
     this.hoveredConnection = undefined;
   }
 
   mouseEnterConnection(connection: NetworkConnection, element: unknown) {
-    connection.isHovered = true;
+    this.connections.forEach((c) => {
+      if (c.name === connection.name)
+        c.isHovered = true;
+    })
+    const elementBounds = (element as SVGLineElement).getBoundingClientRect()
     this.hoveredConnection = {
       name: connection.name,
-      left: (element as SVGLineElement).getBoundingClientRect().left + ((element as SVGLineElement).getTotalLength() / 2),
-      top: (element as SVGLineElement).getBoundingClientRect().bottom  - ((element as SVGLineElement).getTotalLength() / 2)
+      left: elementBounds.left - 20 + (elementBounds.width / 2),
+      top: elementBounds.top + (elementBounds.height / 2)
     };
   }
 
   mouseLeaveContainer(container: Container | undefined) {
     if (!container)
       return;
+    this.hoveredConnection = undefined;
     this.hoveredConnection = undefined;
   }
 
