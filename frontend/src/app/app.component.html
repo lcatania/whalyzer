@@ -1,5 +1,5 @@
 <drag-scroll>
-  <div #map class="w-screen h-screen flex flex-col overflow-visible">
+  <div #map class="w-screen h-screen flex flex-col overflow-visible relative">
     @for (row of baseTileLayer;let rowIndex = $index; track rowIndex) {
     <div class="w-full h-full flex">
       @for (cell of row;let colIndex = $index; track colIndex ) {
@@ -22,26 +22,18 @@
     }
     <svg class="absolute w-screen h-screen z-20 pointer-events-none">
       @for (connection of connections; track $index) {
-      <line [attr.x1]="connection.x1" [attr.y1]="connection.y1" stroke-width="4px" [attr.x2]="connection.x2"
-        [attr.y2]="connection.y2" [attr.stroke]="connection.isHovered ? 'red' : 'black'" />
       <line #conn class="pointer-events-auto" (mouseenter)="mouseEnterConnection(connection,conn)"
         (mouseleave)="mouseLeaveConnection(connection)" [attr.x1]="connection.x1" [attr.y1]="connection.y1"
-        stroke-width="50px" [attr.x2]="connection.x2" [attr.y2]="connection.y2" stroke="transparent" />
+        stroke-width="4px" [attr.x2]="connection.x2" [attr.y2]="connection.y2"
+        [attr.stroke]="connection.isHovered ? 'red' : 'black'" />
       }
     </svg>
-    @if(hoveredContainer) {
-    <div [style.top]="hoveredContainer.top - 20 + 'px'" [style.left]="hoveredContainer.left - 20 + 'px'"
+    @if(tooltip) {
+    <div [style.top]="tooltip.top - 20 + 'px'" [style.left]="tooltip.left - 20 + 'px'"
       class="pixel-border bg-gray-100 p-1 min-w-[100px] z-20 flex justify-center text-zinc-900 absolute">
-      <span class="text-xl">{{hoveredContainer.name}}</span>
+      <span class="text-xl">{{tooltip.content}}</span>
     </div>
     }
-    @if(hoveredConnection) {
-    <div [style.top]="hoveredConnection.top - 20 + 'px'" [style.left]="hoveredConnection.left - 20 + 'px'"
-      class="pixel-border bg-gray-100 p-1 min-w-[100px] z-20 flex justify-center text-zinc-900 absolute">
-      <span class="text-xl">{{hoveredConnection.name}}</span>
-    </div>
-    }
-
   </div>
 </drag-scroll>
 

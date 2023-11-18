@@ -26,8 +26,7 @@ export class AppComponent {
   selectedContainer!: Container
   networks: Network[] = [];
   connections: NetworkConnection[] = [];
-  hoveredContainer!: { name: string, top: number, left: number } | undefined;
-  hoveredConnection!: { name: string, top: number, left: number } | undefined;
+  tooltip: { content: string, top: number, left: number } | undefined = undefined;
 
   @ViewChild('map', { static: false }) map!: ElementRef<HTMLDivElement>;
 
@@ -249,7 +248,7 @@ export class AppComponent {
       const secondBounds = secondDOM.getBoundingClientRect();
       this.connections.push({
         name: networkName,
-        from : newConn.firstContainer,
+        from: newConn.firstContainer,
         to: newConn.secondContainer,
         x1: firstBounds.x + 32,
         x2: secondBounds.x + 32,
@@ -282,8 +281,7 @@ export class AppComponent {
     this.connections.forEach((c) => {
       c.isHovered = false;
     })
-    this.hoveredContainer = undefined;
-    this.hoveredConnection = undefined;
+    this.tooltip = undefined;
   }
 
   mouseEnterConnection(connection: NetworkConnection, element: unknown) {
@@ -292,8 +290,8 @@ export class AppComponent {
         c.isHovered = true;
     })
     const elementBounds = (element as SVGLineElement).getBoundingClientRect()
-    this.hoveredConnection = {
-      name: connection.name,
+    this.tooltip = {
+      content: connection.name,
       left: elementBounds.left - 20 + (elementBounds.width / 2),
       top: elementBounds.top + (elementBounds.height / 2)
     };
@@ -302,15 +300,14 @@ export class AppComponent {
   mouseLeaveContainer(container: Container | undefined) {
     if (!container)
       return;
-    this.hoveredConnection = undefined;
-    this.hoveredConnection = undefined;
+    this.tooltip = undefined;
   }
 
   mouseEnterContainer(container: Container | undefined, element: HTMLDivElement) {
     if (!container)
       return;
-    this.hoveredContainer = {
-      name: container.name,
+    this.tooltip = {
+      content: container.name,
       left: element.getBoundingClientRect().left,
       top: element.getBoundingClientRect().top
     };
