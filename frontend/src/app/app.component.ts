@@ -7,6 +7,7 @@ import { ContainerStateToColorPipe } from './pipes/state-to-color.pipe';
 import { Network, NetworkConnection } from './models/Network';
 import { ContainerDialogComponent } from "./partials/container-dialog/container-dialog.component";
 import { CommandPaletteComponent } from "./partials/command-palette/command-palette.component";
+import { ContainerListComponent } from "./partials/container-list/container-list.component";
 
 const CONTAINER_IMAGE = '../assets/container.png'
 
@@ -15,7 +16,7 @@ const CONTAINER_IMAGE = '../assets/container.png'
   standalone: true,
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.scss'],
-  imports: [NgIf, NgFor, DragScrollModule, ContainerStateToColorPipe, ContainerDialogComponent, CommandPaletteComponent]
+  imports: [NgIf, NgFor, DragScrollModule, ContainerStateToColorPipe, ContainerDialogComponent, CommandPaletteComponent, ContainerListComponent]
 })
 export class AppComponent {
 
@@ -25,6 +26,7 @@ export class AppComponent {
   baseTileLayer: Array<Array<Tile>> = [];
   midTileLayer: Array<Array<Container | undefined>> = [];
   currentContainerCoords: { [key: string]: { ROW: number, COL: number } } = {};
+  containers: Array<Container> = [];
   selectedContainer!: Container
   networks: Network[] = [];
   connections: NetworkConnection[] = [];
@@ -33,17 +35,18 @@ export class AppComponent {
   @ViewChild('map', { static: false }) map!: ElementRef<HTMLDivElement>;
 
   @HostListener('window:keydown', ['$event'])
-  onKeyDown(event:KeyboardEvent) {
-    if(event.key === 'Escape') {
+  onKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Escape') {
       this.isCommandPaletteVisible = false;
     }
-    if(event.key === 'p' && event.ctrlKey){
+    if (event.key === 'p' && event.ctrlKey) {
       this.isCommandPaletteVisible = true;
     }
   }
 
   isContainerDialogVisible: boolean = false;
   isCommandPaletteVisible: boolean = false;
+  isContainerListVisible: boolean = false;
 
   async ngOnInit() {
     for (let xIndex = 0; xIndex <= this.ROWS; xIndex++) {
@@ -239,6 +242,7 @@ export class AppComponent {
       } while (this.midTileLayer[randomRow][randomCol]);
       this.addContainer(randomRow, randomCol, value)
       this.currentContainerCoords[value.id] = { ROW: randomRow, COL: randomCol };
+      this.containers.push(value)
       ++radius;
     });
     return result;

@@ -36,6 +36,6 @@
     }
   </div>
 </drag-scroll>
+<app-container-list [containers]="containers"></app-container-list>
 <app-command-palette [(isVisible)]="isCommandPaletteVisible"></app-command-palette>
-<app-container-dialog [container]="selectedContainer"
-  [(isVisible)]="isContainerDialogVisible"></app-container-dialog>
+<app-container-dialog [container]="selectedContainer" [(isVisible)]="isContainerDialogVisible"></app-container-dialog>
