@@ -32,6 +32,11 @@ input {
         @apply border-sky-500;
 
     }
+
+    &.selected {
+        @apply bg-orange-200;
+        @apply border-orange-500;
+    }
 }
 
 .base-input {
@@ -50,4 +55,32 @@ input {
         3px 0 0 0 black,
         0 -3px 0 0 black,
         0 3px 0 0 black;
+}
+
+.pixel-border-open-right {
+    box-shadow: -3px 0 0 0 black,
+        0 0 0 0 black,
+        0 -3px 0 0 black,
+        0 3px 0 0 black;
+}
+
+.pixel-border-open-left {
+    box-shadow:
+        3px 0 0 0 black,
+        0 -3px 0 0 black,
+        0 3px 0 0 black;
+}
+
+.pixel-border-open-bottom {
+    box-shadow: -3px 0 0 0 black,
+        3px 0 0 0 black,
+        0 0 0 0 black,
+        0 3px 0 0 black;
+}
+
+.pixel-border-open-top {
+    box-shadow: -3px 0 0 0 black,
+        3px 0 0 0 black,
+        0 -3px 0 0 black,
+        0 0 0 0 black;
 }

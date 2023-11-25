@@ -1,28 +1,28 @@
-@if(isVisible){
-<div @slideInOut class="pixel-border absolute top-0 left-0 w-2/4 h-full bg-sky-200 z-30">
+<div [@openClose]="isVisible ? 'open' : 'closed'"
+    class="pixel-border-open-left absolute left-0 w-1/4 min-w-[450px] max-w-[500px] h-[95%]  bg-sky-200 z-30">
     <div class="flex flex-col h-full">
         <div class=" h-16 w-full flex justify-between items-center px-6">
             <div class="flex gap-x-5 items-center">
-                <div [class]="'pixel-border w-[10px] h-[10px] ' + (container.state | stateToColor)">
+                <div [class]="'pixel-border w-[10px] h-[10px] ' + (container?.state | stateToColor)">
                 </div>
-                <span class="text-2xl">{{container.state}} ({{container.status}})</span>
+                <span class="text-2xl">{{container?.state}} ({{container?.status}})</span>
             </div>
             <button class="base-button w-8 h-8" (click)="closeDialog()">X</button>
         </div>
         <div class="flex-1 flex-col flex gap-y-3 px-5 ">
             <span class="text-3xl">Name:</span>
-            <input class="pixel-border base-input" placeholder="Awesome Container" readonly [value]="container.name" />
+            <input class="pixel-border base-input" placeholder="Awesome Container" readonly [value]="container?.name" />
             <span class="text-3xl">Image:</span>
-            <input class="pixel-border base-input" placeholder="Awesome Container" readonly [value]="container.image" />
+            <input class="pixel-border base-input" placeholder="Awesome Container" readonly [value]="container?.image" />
             <span class="text-3xl">Ports:</span>
-            @for (port of container.ports; track $index) {
+            @for (port of container?.ports; track $index) {
             <span>{{port.privatePort}} : {{port.publicPort}}</span>
             }
             @empty {
             <span class="text-2xl">No ports exposed :(</span>
             }
             <span class="text-3xl">Mounts:</span>
-            @for (mount of container.mounts; track $index) {
+            @for (mount of container?.mounts; track $index) {
             <span class="text-2xl">{{mount.destination}} : {{mount.source}}</span>
             }
             @empty {
@@ -31,20 +31,19 @@
         </div>
 
         <div class="flex justify-end items-center gap-x-8 pe-6 h-20 w-full">
-            @if(container.state === 'paused'){
+            @if(container?.state === 'paused'){
             <button class="base-button bg-yellow-200 border-yellow-500">Resume</button>
             }
-            @if(container.state === 'running'){
+            @if(container?.state === 'running'){
             <button class="base-button bg-yellow-200 border-yellow-500">Pause</button>
             }
-            @if(container.state === 'running' || container.state === 'paused'){
+            @if(container?.state === 'running' || container?.state === 'paused'){
             <button class="base-button bg-red-200 border-red-500">Stop</button>
             }
-            @if(container.state === 'exited'){
+            @if(container?.state === 'exited'){
             <button class="base-button bg-green-400">Start</button>
             }
         </div>
     </div>
 
 </div>
-}

@@ -1,6 +1,6 @@
 import { animate, state, style, transition, trigger } from '@angular/animations';
-import { Component, Input, OnInit } from '@angular/core';
-import { Container } from 'src/app/models/Container';
+import { Component, Input, OnInit, WritableSignal, computed, signal } from '@angular/core';
+import { Container, ContainerState } from 'src/app/models/Container';
 import { ContainerStateToColorPipe } from "../../pipes/state-to-color.pipe";
 
 @Component({
@@ -23,7 +23,7 @@ import { ContainerStateToColorPipe } from "../../pipes/state-to-color.pipe";
             })),
             state('closed', style({
                 top: '50%',
-                transform: 'translate(-100%, -50%)',
+                transform: 'translate(-101%, -50%)',
             })),
             transition('open => closed', [
                 animate('150ms')
@@ -40,13 +40,34 @@ export class ContainerListComponent implements OnInit {
 
     @Input() containers: Container[] = [];
 
-    isVisible: boolean = true;
+    isVisible = signal(false);
+    selectedState: WritableSignal<ContainerState | undefined> = signal(undefined)
+    states = ContainerState;
+    filteredContainers = computed(() => {
+        console.log("Computed run ")
+        if (!this.selectedState())
+            return this.containers;
+
+        return this.containers.filter((c) => this.selectedState() === c.state)
+    })
+
 
     constructor() { }
 
     ngOnInit() { }
 
     closeDialog() {
-        this.isVisible = false;
+        this.isVisible.set(false);
+    }
+
+    toggleVisibility() {
+        this.isVisible.update(value => !value);
+    }
+
+    selectState(state: ContainerState | undefined) {
+        if(state === this.selectedState())
+            this.selectedState.set(undefined);
+        else
+            this.selectedState.set(state);
     }
 }

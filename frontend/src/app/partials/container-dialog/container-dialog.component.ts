@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { Container } from 'src/app/models/Container';
 import { ContainerStateToColorPipe } from "../../pipes/state-to-color.pipe";
-import { animate, style, transition, trigger } from '@angular/animations';
+import { animate, state, style, transition, trigger } from '@angular/animations';
 
 @Component({
     standalone: true,
@@ -9,21 +9,28 @@ import { animate, style, transition, trigger } from '@angular/animations';
     templateUrl: 'container-dialog.component.html',
     imports: [ContainerStateToColorPipe],
     animations: [
-        trigger('slideInOut', [
-            transition(':enter', [
-                style({ transform: "translateX(-100%)" }),
-                animate('150ms', style({ transform: 0 })),
+        trigger('openClose', [
+            state('open', style({
+                top: '50%',
+                transform: 'translateY(-50%)',
+            })),
+            state('closed', style({
+                top: '50%',
+                transform: 'translate(-102%, -50%)',
+            })),
+            transition('open => closed', [
+                animate('150ms')
             ]),
-            transition(':leave', [
-                animate('150ms', style({ transform: "translateX(-100%)" }))
-            ])
-        ]),
+            transition('closed => open', [
+                animate('150ms')
+            ]),
+        ])
     ]
 })
 
 export class ContainerDialogComponent implements OnInit {
 
-    @Input({ required: true }) container!: Container
+    @Input({ required: true }) container!: Container | undefined;
 
     @Input({ required: true }) isVisible: boolean = false;
     @Output() isVisibleChange: EventEmitter<boolean> = new EventEmitter<boolean>();
